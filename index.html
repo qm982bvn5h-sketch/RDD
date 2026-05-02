@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Roue du Destin - Soungalo Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Playfair+Display:wght@700&family=Space+Grotesk:wght@500;600&display=swap');
+
+        :root {
+            --gold: #facc15;
+            --neon: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at 50% 30%, #2a1b4a 0%, #0f051f 70%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bg-particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.35;
+        }
+
+        /* === BADGE EN LIGNE === */
+        .live-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: 1px solid rgba(74, 222, 128, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        header {
+            text-align: center;
+            padding: 3.5rem 1rem 2rem;
+            z-index: 10;
+        }
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 600;
+            letter-spacing: -2px;
+            background: linear-gradient(90deg, #facc15, #e0aaff, #c084fc, #67e8f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 60px rgba(168, 85, 247, 0.6);
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            opacity: 0.9;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 360px;
+            height: 360px;
+            margin: 2rem auto;
+            z-index: 10;
+        }
+        @media (min-width: 640px) {
+            .wheel-wrapper { width: 480px; height: 480px; }
+        }
+
+        canvas#wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 80px rgba(168, 85, 247, 0.6),
+                inset 0 0 80px rgba(0,0,0,0.5);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            z-index: 30;
+            filter: drop-shadow(0 10px 30px rgba(249, 115, 22, 0.8));
+        }
+        .pointer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-bottom: 65px solid #f97316;
+            z-index: 2;
+        }
+        .pointer::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 28px;
+            background: #fff;
+            border-radius: 50%;
+            border: 5px solid #f97316;
+            box-shadow: 0 0 25px #facc15;
+            z-index: 3;
+        }
+
+        .controls { 
+            text-align: center; 
+            margin: 2.8rem 0 2rem;
+            z-index: 10;
+        }
+
+        #spinBtn {
+            padding: 24px 80px;
+            font-size: 1.65rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #7c3aed, #c026d3, #f472b6);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            box-shadow: 0 25px 60px rgba(124, 58, 237, 0.5);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            letter-spacing: 0.5px;
+        }
+
+        #spinBtn:hover:not(:disabled) {
+            transform: translateY(-12px) scale(1.08);
+            box-shadow: 0 35px 80px rgba(192, 38, 211, 0.7);
+        }
+
+        #result {
+            margin: 2rem auto;
+            padding: 3rem 2.2rem;
+            width: 90%;
+            max-width: 480px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(30px);
+            border-radius: 36px;
+            border: 2px solid rgba(250, 204, 21, 0.25);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.85) translateY(60px);
+            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 10;
+        }
+        #result.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        #resultEmoji { 
+            font-size: 7rem; 
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        #resultText {
+            font-size: 2.1rem;
+            font-family: 'Comic Neue', cursive;
+            line-height: 1.25;
+            background: linear-gradient(to right, #fde047, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .share-btn {
+            margin-top: 2rem;
+            padding: 18px 60px;
+            background: linear-gradient(90deg, #22c55e, #86efac);
+            color: #052e16;
+            font-weight: 700;
+            border: none;
+            border-radius: 9999px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .history {
+            margin-top: 2.2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.12);
+            font-size: 1.05rem;
+            opacity: 0.9;
+        }
+
+        footer { margin-top: auto; padding: 3rem 1rem; opacity: 0.6; z-index: 10; }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-particles" width="800" height="800"></canvas>
+
+    <!-- Badge en ligne -->
+    <div class="live-badge">
+        <span class="live-dot"></span>
+        <span>🧑‍💻 en ligne</span>
+        <span id="live-count">237</span>
+    </div>
+
+    <header>
+        <h1>LA ROUE DU DESTIN</h1>
+        <p class="subtitle">SOUNGALO a crée le site mais ton destin est ebtre tes main</p>
+    </header>
+
+    <div class="wheel-wrapper">
+        <canvas id="wheel" width="560" height="560" role="img" aria-label="Roue du destin"></canvas>
+        <div class="pointer"></div>
+    </div>
+
+    <div class="controls">
+        <button id="spinBtn">FAIRE TOURNER LA ROUE</button>
+    </div>
+
+    <div id="result">
+        <span id="resultEmoji"></span>
+        <div id="resultText"></div>
+        <button class="share-btn" id="shareBtn">📤 Partager ce destin</button>
+        <div class="history" id="history"></div>
+    </div>
+
+    <footer>
+       Va revisé 📚c'est mieux…
+    </footer>
+
+    <script>
+        const segments = [
+            { label: "Dormir", emoji: "😴", color: "#3b82f6", msg: "Tu dois aller dormir. C’est écrit." },
+            { label: "Réviser", emoji: "📚", color: "#22c55e", msg: "L’heure de réviser a sonné." },
+            { label: "TikTok", emoji: "📱", color: "#ec4899", msg: "TikTok jusqu’au lever du soleil." },
+            { label: "Rien", emoji: "🤷‍♂️", color: "#64748b", msg: "Tu ne fais rien. Paix intérieure." },
+            { label: "Sport", emoji: "🏋️‍♂️", color: "#ef4444", msg: "Bouge ton corps maintenant !" },
+            { label: "Manger", emoji: "🍖", color: "#f59e0b", msg: "Va te préparer un repas royal." },
+            { label: "Va prier", emoji: "🙏", color: "#8b5cf6", msg: "Va prier. Le moment est venu." }
+        ];
+
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const bgCanvas = document.getElementById('bg-particles');
+        const bgCtx = bgCanvas.getContext('2d');
+
+        const spinBtn = document.getElementById('spinBtn');
+        const resultDiv = document.getElementById('result');
+        const resultEmoji = document.getElementById('resultEmoji');
+        const resultText = document.getElementById('resultText');
+        const shareBtn = document.getElementById('shareBtn');
+        const historyDiv = document.getElementById('history');
+        const liveCount = document.getElementById('live-count');
+
+        let currentRotation = 0;
+        let isSpinning = false;
+        let history = [];
+        let currentLive = 237;
+
+        // Animation du compteur en ligne
+        function animateLiveCount() {
+            setInterval(() => {
+                const min = 104;
+                const max = 300;
+                const target = Math.floor(Math.random() * (max - min + 1)) + min;
+                
+                const increment = target > currentLive ? 1 : -1;
+                const interval = setInterval(() => {
+                    currentLive += increment;
+                    liveCount.textContent = currentLive;
+                    if (currentLive === target) clearInterval(interval);
+                }, 30);
+            }, 4500);
+        }
+
+        // Background particles (inchangé)
+        let particles = [];
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * bgCanvas.width;
+                this.y = Math.random() * bgCanvas.height * 0.6;
+                this.size = Math.random() * 2.8 + 1;
+                this.speed = Math.random() * 0.8 + 0.3;
+            }
+            update() { this.y += this.speed; if (this.y > bgCanvas.height) this.reset(); }
+            draw() {
+                bgCtx.fillStyle = 'rgba(250, 204, 21, 0.7)';
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                bgCtx.fill();
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < 90; i++) particles.push(new Particle());
+        }
+
+        function animateBackground() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateBackground);
+        }
+
+        // drawWheel, getWinningSegment, launchConfetti, spinWheel restent identiques à ta version
+        function drawWheel(rotation = 0) {
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const radius = 255;
+            const anglePerSegment = (2 * Math.PI) / segments.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.shadowBlur = 40;
+            ctx.shadowColor = "#c084fc";
+
+            for (let i = 0; i < segments.length; i++) {
+                const start = rotation + i * anglePerSegment;
+                const end = start + anglePerSegment;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, start, end);
+                ctx.lineTo(cx, cy);
+                ctx.fillStyle = segments[i].color;
+                ctx.fill();
+                ctx.strokeStyle = "#1e1238";
+                ctx.lineWidth = 10;
+                ctx.stroke();
+            }
+
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius - 55, 0, Math.PI * 2);
+            ctx.strokeStyle = "#e0f2fe";
+            ctx.lineWidth = 22;
+            ctx.stroke();
+
+            const centerGrad = ctx.createRadialGradient(cx-20, cy-20, 15, cx, cy, 78);
+            centerGrad.addColorStop(0, "#fefce8");
+            centerGrad.addColorStop(1, "#4c1d95");
+            ctx.beginPath();
+            ctx.arc(cx, cy, 78, 0, Math.PI * 2);
+            ctx.fillStyle = centerGrad;
+            ctx.fill();
+
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "rgba(0,0,0,0.8)";
+            for (let i = 0; i < segments.length; i++) {
+                const angle = rotation + i * anglePerSegment + anglePerSegment / 2;
+                const x = cx + Math.cos(angle) * 155;
+                const y = cy + Math.sin(angle) * 155;
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle + Math.PI / 2);
+                ctx.font = "bold 42px Poppins";
+                ctx.fillStyle = "#fff";
+                ctx.textAlign = "center";
+                ctx.fillText(segments[i].emoji, 0, -15);
+                ctx.font = "700 18px Poppins";
+                ctx.fillText(segments[i].label.toUpperCase(), 0, 45);
+                ctx.restore();
+            }
+        }
+
+        function getWinningSegment(rotation) {
+            const anglePer = (2 * Math.PI) / segments.length;
+            let norm = (rotation % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+            norm = (norm + Math.PI / 2) % (2 * Math.PI);
+            return Math.floor((2 * Math.PI - norm) / anglePer) % segments.length;
+        }
+
+        function launchConfetti() {
+            for (let i = 0; i < 220; i++) {
+                setTimeout(() => {
+                    const c = document.createElement('div');
+                    Object.assign(c.style, {
+                        position: 'fixed', width: Math.random() * 12 + 8 + 'px', height: c.style.width,
+                        left: Math.random() * 100 + 'vw', top: '-30px',
+                        background: ['#facc15','#c084fc','#22c55e','#f472b6'][Math.floor(Math.random()*4)],
+                        borderRadius: '50%', zIndex: '999', pointerEvents: 'none'
+                    });
+                    document.body.appendChild(c);
+                    setTimeout(() => {
+                        c.style.transition = 'all 4.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+                        c.style.transform = `translate(${Math.random()*700-350}px, ${window.innerHeight + 200}px) rotate(${Math.random()*2500}deg)`;
+                        c.style.opacity = '0';
+                    }, 50);
+                    setTimeout(() => c.remove(), 5000);
+                }, i * 1.2);
+            }
+        }
+
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            resultDiv.classList.remove('show');
+
+            const totalSpins = 12 + Math.random() * 5;
+            const target = totalSpins * 360 + Math.random() * 360;
+            const totalRotation = (target * Math.PI) / 180;
+
+            let start = null;
+            const duration = 5200;
+
+            function animate(ts) {
+                if (!start) start = ts;
+                let progress = Math.min((ts - start) / duration, 1);
+                progress = 1 - Math.pow(1 - progress, 4);
+
+                const angle = totalRotation * progress;
+                drawWheel(angle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    currentRotation = angle;
+                    const winnerIndex = getWinningSegment(currentRotation);
+                    const winner = segments[winnerIndex];
+
+                    history.unshift(winner.label);
+                    if (history.length > 6) history.pop();
+                    historyDiv.innerHTML = `Derniers destins : <strong>${history.join(" • ")}</strong>`;
+
+                    resultEmoji.textContent = winner.emoji;
+                    resultText.textContent = winner.msg;
+                    resultDiv.classList.add('show');
+                    launchConfetti();
+                    spinBtn.disabled = false;
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Bouton Partager amélioré avec le texte exact demandé
+        shareBtn.addEventListener('click', async () => {
+            const message = `La roue du destin m’a dit : ${resultText.textContent}`;
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'La Roue du Destin',
+                        text: message,
+                        url: window.location.href
+                    });
+                } catch (e) {}
+            } else {
+                navigator.clipboard.writeText(message);
+                alert("✅ Message copié ! Tu peux le coller où tu veux.");
+            }
+        });
+
+        spinBtn.addEventListener('click', spinWheel);
+
+        // Initialisation
+        window.onload = () => {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            initParticles();
+            animateBackground();
+            drawWheel(0);
+            animateLiveCount();   // Démarrage du compteur dynamique
+        };
+
+        window.addEventListener('resize', () => {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
